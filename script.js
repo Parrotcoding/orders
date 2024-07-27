@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     shopTab.addEventListener('click', () => {
         createSection.classList.add('hidden');
         shopSection.classList.remove('hidden');
+        renderProducts(); // Ensure products are rendered when the shop tab is clicked
     });
 
     administerTab.addEventListener('click', () => {
@@ -125,5 +126,10 @@ document.addEventListener('DOMContentLoaded', function() {
             code += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return code;
+    }
+
+    function getRandomStatus() {
+        const statuses = ['Processed', 'In Progress', 'Ready'];
+        return statuses[Math.floor(Math.random() * statuses.length)];
     }
 });
