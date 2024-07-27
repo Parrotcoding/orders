@@ -1,17 +1,7 @@
-// Firebase configuration (replace with your actual config)
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    databaseURL: "YOUR_DATABASE_URL",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+// Supabase configuration
+const SUPABASE_URL = 'https://cfxymcjpewltucsymvog.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmeHltY2pwZXdsdHVjc3ltdm9nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjIwNDE2NTEsImV4cCI6MjAzNzYxNzY1MX0.P00sv3YYVVkhm2qjqEE1Y7MmXfN8uSsnGo80sCHeXhU';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 document.addEventListener('DOMContentLoaded', function() {
     const createTab = document.getElementById('createTab');
@@ -55,45 +45,78 @@ document.addEventListener('DOMContentLoaded', function() {
         deviceCode.textContent = `Device Code: ${code}`;
     });
 
-    addProductButton.addEventListener('click', () => {
+    addProductButton.addEventListener('click', async () => {
         const productName = document.getElementById('productName').value;
         if (productName) {
-            const newProductRef = database.ref('products').push();
-            newProductRef.set({
-                name: productName
-            });
+            const { data, error } = await supabase
+                .from('products')
+                .insert([{ name: productName }]);
+            if (error) {
+                console.error('Error adding product:', error);
+            } else {
+                console.log('Product added successfully');
+                renderProducts();
+            }
             document.getElementById('productName').value = '';
         }
     });
 
-    addOrderButton.addEventListener('click', () => {
+    addOrderButton.addEventListener('click', async () => {
         const orderNumber = document.getElementById('orderNumber').value;
         if (orderNumber && orderNumber >= 1 && orderNumber <= 200) {
-            database.ref('products').once('value', (snapshot) => {
-                const products = snapshot.val();
-                const productKeys = Object.keys(products);
-                const product = products[productKeys[Math.floor(Math.random() * productKeys.length)]].name;
-                const status = getRandomStatus();
-                const newOrderRef = database.ref('orders').push();
-                newOrderRef.set({
-                    number: orderNumber,
-                    product: product,
-                    status: status
-                });
-                document.getElementById('orderNumber').value = '';
-            });
+            const { data: products, error: productsError } = await supabase
+                .from('products')
+                .select('name');
+            if (productsError) {
+                console.error('Error fetching products:', productsError);
+                return;
+            }
+            const product = products[Math.floor(Math.random() * products.length)].name;
+            const status = getRandomStatus();
+            const { data, error } = await supabase
+                .from('orders')
+                .insert([{ number: orderNumber, product, status }]);
+            if (error) {
+                console.error('Error adding order:', error);
+            } else {
+                console.log('Order added successfully');
+                renderOrders();
+            }
+            document.getElementById('orderNumber').value = '';
         }
     });
 
-    database.ref('products').on('value', (snapshot) => {
-        const products = snapshot.val();
-        renderProducts(products);
-    });
+    async function renderProducts() {
+        const { data: products, error } = await supabase
+            .from('products')
+            .select('*');
+        if (error) {
+            console.error('Error fetching products:', error);
+            return;
+        }
+        productsList.innerHTML = '';
+        products.forEach(product => {
+            const productDiv = document.createElement('div');
+            productDiv.textContent = product.name;
+            productsList.appendChild(productDiv);
+        });
+    }
 
-    database.ref('orders').on('value', (snapshot) => {
-        const orders = snapshot.val();
-        renderOrders(orders);
-    });
+    async function renderOrders() {
+        const { data: orders, error } = await supabase
+            .from('orders')
+            .select('*');
+        if (error) {
+            console.error('Error fetching orders:', error);
+            return;
+        }
+        ordersList.innerHTML = '';
+        orders.forEach(order => {
+            const orderDiv = document.createElement('div');
+            orderDiv.textContent = `Order #${order.number}: ${order.product} - Status: ${order.status}`;
+            ordersList.appendChild(orderDiv);
+        });
+    }
 
     function generateCode() {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -102,28 +125,5 @@ document.addEventListener('DOMContentLoaded', function() {
             code += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return code;
-    }
-
-    function renderProducts(products) {
-        productsList.innerHTML = '';
-        for (let key in products) {
-            const productDiv = document.createElement('div');
-            productDiv.textContent = products[key].name;
-            productsList.appendChild(productDiv);
-        }
-    }
-
-    function renderOrders(orders) {
-        ordersList.innerHTML = '';
-        for (let key in orders) {
-            const orderDiv = document.createElement('div');
-            orderDiv.textContent = `Order #${orders[key].number}: ${orders[key].product} - Status: ${orders[key].status}`;
-            ordersList.appendChild(orderDiv);
-        }
-    }
-
-    function getRandomStatus() {
-        const statuses = ['Processed', 'In Progress', 'Ready'];
-        return statuses[Math.floor(Math.random() * statuses.length)];
     }
 });
