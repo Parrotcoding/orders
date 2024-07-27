@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YourOrder POS</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>YourOrder POS</h1>
+            <div class="tabs">
+                <button id="createTab">Create</button>
+                <button id="shopTab">Shop</button>
+            </div>
+        </header>
+        <main id="create">
+            <h2>Create Device Code</h2>
+            <button id="generateCode">Generate Code</button>
+            <p id="deviceCode"></p>
+        </main>
+        <main id="shop" class="hidden">
+            <div class="sub-tabs">
+                <button id="administerTab">Administer</button>
+                <button id="viewTab">View</button>
+            </div>
+            <section id="administer" class="hidden">
+                <h2>Administer</h2>
+                <div class="form-group">
+                    <label for="productName">Product Name</label>
+                    <input type="text" id="productName">
+                    <button id="addProduct">Add Product</button>
+                </div>
+                <div class="form-group">
+                    <label for="orderNumber">Order Number</label>
+                    <input type="number" id="orderNumber" min="1" max="200">
+                    <button id="addOrder">Add Order</button>
+                </div>
+                <div id="productsList"></div>
+            </section>
+            <section id="view" class="hidden">
+                <h2>View Orders</h2>
+                <div id="ordersList"></div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
